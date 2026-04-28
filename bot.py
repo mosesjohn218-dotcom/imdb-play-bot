@@ -26,14 +26,22 @@ def search_imdb(movie_name):
 
     results = []
 
-    for item in data.get("d", [])[:5]:
+    for item in data.get("d", []):
         title = item.get("l")
         imdb_id = item.get("id")
         year = item.get("y")
         poster = item.get("i", {}).get("imageUrl") if item.get("i") else None
+        content_type = item.get("q")  # 👈 THIS IS IMPORTANT
+
+        # ✅ FILTER ONLY MOVIES & SERIES
+        if content_type not in ["feature", "TV series", "movie"]:
+            continue
 
         if title and imdb_id:
             results.append((title, imdb_id, year, poster))
+
+        if len(results) >= 5:
+            break
 
     return results
 
