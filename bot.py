@@ -101,8 +101,10 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     caption = f"🎬 {title}"
-    if year:
-        caption += f" ({year})"
+if year:
+    caption += f" ({year})"
+
+caption += "\n\n💡 Tip:\nOpen player settings to change quality & enable subtitles"
 
     # ✅ show poster after selection
     if poster:
