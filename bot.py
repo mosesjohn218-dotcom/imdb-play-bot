@@ -16,14 +16,22 @@ def search_imdb(movie_name):
     soup = BeautifulSoup(res.text, "html.parser")
 
     results = []
-    rows = soup.select("td.result_text a")
 
-    for r in rows[:5]:
-        title = r.text
-        href = r["href"]
-        imdb_id = href.split("/")[2]
+    # Updated selector
+    for item in soup.select("li.ipc-metadata-list-summary-item"):
+        link = item.find("a")
+        if not link:
+            continue
 
-        results.append((title, imdb_id))
+        title = link.text.strip()
+        href = link.get("href")
+
+        if "/title/" in href:
+            imdb_id = href.split("/")[2]
+            results.append((title, imdb_id))
+
+        if len(results) >= 5:
+            break
 
     return results
 
