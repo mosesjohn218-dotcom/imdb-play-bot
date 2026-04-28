@@ -4,7 +4,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 import os
 
-BOT_TOKEN = os.getenv("8359098357:AAHGMm-9p0FuAnTt6lkj8mOpbkGfmYyoIJ4")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # 🔍 Search IMDb
 def search_imdb(movie_name):
