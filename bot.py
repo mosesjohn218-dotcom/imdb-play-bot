@@ -29,9 +29,11 @@ def search_imdb(movie_name):
     for item in data.get("d", [])[:5]:
         title = item.get("l")
         imdb_id = item.get("id")
+        year = item.get("y")
+        poster = item.get("i", {}).get("imageUrl") if item.get("i") else None
 
         if title and imdb_id:
-            results.append((title, imdb_id))
+            results.append((title, imdb_id, year, poster))
 
     return results
 
@@ -46,17 +48,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ No results found")
         return
 
-    keyboard = []
+    for title, imdb_id, year, poster in results:
+        play_url = f"https://www.playimdb.com/title/{imdb_id}"
 
-    for title, imdb_id in results:
-        keyboard.append([InlineKeyboardButton(title, callback_data=imdb_id)])
+        keyboard = [
+            [InlineKeyboardButton("▶️ Play", url=play_url)]
+        ]
 
-    reply_markup = InlineKeyboardMarkup(keyboard)
+        reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_text(
-        "🎬 Select your movie:",
-        reply_markup=reply_markup
-    )
+        caption = f"🎬 {title}"
+        if year:
+            caption += f" ({year})"
+
+        if poster:
+            await update.message.reply_photo(
+                photo=poster,
+                caption=caption,
+                reply_markup=reply_markup
+            )
+        else:
+            await update.message.reply_text(
+                caption,
+                reply_markup=reply_markup
+            )
 
 
 # 🎯 Button click
