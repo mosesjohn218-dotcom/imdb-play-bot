@@ -8,30 +8,30 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # 🔍 Search IMDb
 def search_imdb(movie_name):
-    url = "https://www.imdb.com/find"
-    params = {"q": movie_name}
+    import urllib.parse
+
+    query = urllib.parse.quote(movie_name)
+    first_letter = movie_name[0].lower()
+
+    url = f"https://v3.sg.media-imdb.com/suggestion/{first_letter}/{query}.json"
+
     headers = {"User-Agent": "Mozilla/5.0"}
 
-    res = requests.get(url, params=params, headers=headers)
-    soup = BeautifulSoup(res.text, "html.parser")
+    res = requests.get(url, headers=headers)
+
+    if res.status_code != 200:
+        return []
+
+    data = res.json()
 
     results = []
 
-    # Updated selector
-    for item in soup.select("li.ipc-metadata-list-summary-item"):
-        link = item.find("a")
-        if not link:
-            continue
+    for item in data.get("d", [])[:5]:
+        title = item.get("l")
+        imdb_id = item.get("id")
 
-        title = link.text.strip()
-        href = link.get("href")
-
-        if "/title/" in href:
-            imdb_id = href.split("/")[2]
+        if title and imdb_id:
             results.append((title, imdb_id))
-
-        if len(results) >= 5:
-            break
 
     return results
 
