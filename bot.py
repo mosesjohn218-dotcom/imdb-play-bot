@@ -56,30 +56,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ No results found")
         return
 
+    keyboard = []
+
     for title, imdb_id, year, poster in results:
-        play_url = f"https://www.playimdb.com/title/{imdb_id}"
+        label = f"{title} ({year})" if year else title
+        keyboard.append([InlineKeyboardButton(label, callback_data=imdb_id)])
 
-        keyboard = [
-            [InlineKeyboardButton("▶️ Play", url=play_url)]
-        ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
-        caption = f"🎬 {title}"
-        if year:
-            caption += f" ({year})"
-
-        if poster:
-            await update.message.reply_photo(
-                photo=poster,
-                caption=caption,
-                reply_markup=reply_markup
-            )
-        else:
-            await update.message.reply_text(
-                caption,
-                reply_markup=reply_markup
-            )
+    await update.message.reply_text(
+        "🎬 Select your movie:",
+        reply_markup=reply_markup
+    )
 
 
 # 🎯 Button click
@@ -88,6 +76,9 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     imdb_id = query.data
+
+    # 🔍 get movie again (simple approach)
+    url = f"https://www.imdb.com/title/{imdb_id}/"
 
     play_url = f"https://www.playimdb.com/title/{imdb_id}"
 
@@ -98,7 +89,13 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await query.edit_message_text(
-        "🎬 Here you go:",
+        "🎬 Loading your movie...",
+    )
+
+    # OPTIONAL: You can later fetch poster again here
+
+    await query.message.reply_text(
+        "🎬 Ready to play",
         reply_markup=reply_markup
     )
 
