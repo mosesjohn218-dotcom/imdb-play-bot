@@ -84,7 +84,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     year = ""
     poster = None
 
-    # ✅ find selected movie
+    # find selected movie
     for t, i, y, p in results:
         if i == imdb_id:
             title = t
@@ -101,12 +101,12 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     caption = f"🎬 {title}"
-if year:
-    caption += f" ({year})"
+    if year:
+        caption += f" ({year})"
 
-caption += "\n\n💡 Tip:\nOpen player settings to change quality & enable subtitles"
+    caption += "\n\n💡 Tip:\nOpen player settings to change quality & enable subtitles"
 
-    # ✅ show poster after selection
+    # show poster
     if poster:
         await query.message.reply_photo(
             photo=poster,
