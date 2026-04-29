@@ -3,10 +3,25 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 import os
 import urllib.parse
+import json
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# 🔍 Search IMDb
+# ---------------- USER STORAGE ---------------- #
+
+def load_users():
+    try:
+        with open("users.json", "r") as f:
+            return set(json.load(f))
+    except:
+        return set()
+
+def save_users(users):
+    with open("users.json", "w") as f:
+        json.dump(list(users), f)
+
+# ---------------- SEARCH IMDb ---------------- #
+
 def search_imdb(movie_name):
     query = urllib.parse.quote(movie_name)
     first_letter = movie_name[0].lower()
@@ -31,7 +46,6 @@ def search_imdb(movie_name):
         poster = item.get("i", {}).get("imageUrl") if item.get("i") else None
         content_type = item.get("q")
 
-        # ✅ only movies / series
         if content_type not in ["feature", "TV series", "movie"]:
             continue
 
@@ -43,10 +57,25 @@ def search_imdb(movie_name):
 
     return results
 
+# ---------------- HANDLE MESSAGE ---------------- #
 
-# 🤖 Handle user message
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     movie_name = update.message.text
+
+    # ✅ TRACK USERS (SAFE)
+    user = update.message.from_user
+    user_id = user.id
+    username = user.username
+
+    users = load_users()
+
+    if user_id not in users:
+        users.add(user_id)
+        save_users(users)
+
+        print(f"🔥 New user: {username} | Total users: {len(users)}")
+
+    # ---------------- SEARCH ---------------- #
 
     results = search_imdb(movie_name)
 
@@ -54,7 +83,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ No results found")
         return
 
-    # ✅ store results for later use
     context.user_data["results"] = results
 
     keyboard = []
@@ -70,8 +98,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
+# ---------------- BUTTON CLICK ---------------- #
 
-# 🎯 Handle button click
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -84,7 +112,6 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     year = ""
     poster = None
 
-    # find selected movie
     for t, i, y, p in results:
         if i == imdb_id:
             title = t
@@ -106,7 +133,6 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     caption += "\n\n💡 Tip:\nOpen player settings to change quality & enable subtitles"
 
-    # show poster
     if poster:
         await query.message.reply_photo(
             photo=poster,
@@ -119,8 +145,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=reply_markup
         )
 
+# ---------------- START BOT ---------------- #
 
-# 🚀 Start bot
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
